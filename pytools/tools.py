@@ -8,11 +8,11 @@ def chunkmap(chunksize, fn, seq):
     [[10, 11, 12, 13, 14], [15, 16, 17, 18, 19]]
     """
 
-    bufferseq = []
+    buffer = []
     for val in seq:
-        bufferseq.append(val)
-        if len(bufferseq) < chunksize: continue
+        buffer.append( fn(val) )
+        if len(buffer) < chunksize: continue
         else:
-            yield map(fn, bufferseq)
-            bufferseq = []
-    if bufferseq: yield map(fn, bufferseq)
+            yield buffer
+            buffer = []
+    if buffer: yield buffer
