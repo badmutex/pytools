@@ -23,7 +23,7 @@ def Right(obj):
     return e
 
 def rights(eithers):
-    return itertools.ifilter(lambda e: e.success(), eithers)
+    return itertools.imap(lambda e: e.right, itertools.ifilter(lambda e: e.success(), eithers))
 
 def lefts(eithers):
-    return itertools.ifilter(lambda e: e.failure(), eithers)
+    return itertools.imap(lambda e: e.left,  itertools.ifilter(lambda e: e.failure(), eithers))
