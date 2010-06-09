@@ -5,6 +5,7 @@ setup(name='pytools',
       py_modules=['pytools.tools',
                   'pytools.optparse',
                   'pytools.data',
-                  'pytools.path'
+                  'pytools.path',
+                  'pytools.decorators'
                   ]
       )
