@@ -6,6 +6,10 @@ setup(name='pytools',
                   'pytools.optparse',
                   'pytools.data',
                   'pytools.path',
-                  'pytools.decorators'
+                  'pytools.decorators',
+
+                  'pytools.research',
+                  'pytools.research.md',
+                  'pytools.research.md.ww'
                   ]
       )
