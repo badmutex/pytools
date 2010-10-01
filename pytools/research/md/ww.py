@@ -3,8 +3,10 @@ Usefull utilities for the WW mutants projects
 """
 
 from protolyze.tool.MSMBuilder import Builder, Cluster
-from protolyze.weave import MSMBuilder
 from protolyze.db.results import WorkqueuePathFixer
+import protolyze.weave as weave
+
+import protolyze.db.results as dbresults
 
 from weaver.dataset import MySQLDataSet, Query, And
 
@@ -55,7 +57,7 @@ def database(project, dbaccess=DBAccess(), file_path = lambda obj: obj.xtc):
                        table = dbaccess.table,
                        user  = dbaccess.user,
                        pswd  = dbaccess.password )
-    db.file_path = lambda obj: obj.xtc
+    db.file_path = file_path
     return db
 
 
@@ -63,20 +65,35 @@ NDX_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/ndx-msmbuilder
 def ndx(name, project, ndx_root=NDX_ROOT):
     return os.path.join(ndx_root, '%d/%s' % (project.mutant, name))
 
+FOLDED_MODEL_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/folded_model'
+def psf(project, root=FOLDED_MODEL_ROOT):
+    return os.path.join(root, 'ww_structure_%d_model_charm.psf' % project.mutant)
 
-def get_xtcs(project, frames=None, limit=None, dbaccess=DBAccess()):
-    wq_path_fixer = WorkqueuePathFixer()
-    db      = database(project, dbaccess=dbaccess)
 
-    predicate = And(db.c.frames == frames, db.c.xtc != None)
+def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc'):
+    if column is 'xtc':
+        file_path_fn = lambda obj: obj.xtc
+        db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
+        predicate = And(db.c.frames == frames, db.c.xtc != None)
+    elif column is 'location':
+        file_path_fn = lambda obj: obj.location
+        db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
+        predicate = And(db.c.frames == frames, db.c.location != None)
 
     if isinstance(limit, int):
         q = Query(db, predicate, limit=limit ) 
     else:
         q = Query(db, predicate)
 
-    xtcs    = itertools.imap( wq_path_fixer.fix, q )
-    return list(xtcs)
+    wq_path_fixer = WorkqueuePathFixer()
+    paths = itertools.imap( wq_path_fixer.fix, q )
+    return list(paths)
+
+def get_xtcs(*args, **kws):
+    return get_paths(*args, column='xtc', **kws)
+
+def get_locations(*args, **kws):
+    return get_paths(*args, column='location', **kws)
 
 
 def msm_path(msm_root, ndx_name, msm_on=None):
@@ -91,3 +108,25 @@ def msm_path(msm_root, ndx_name, msm_on=None):
         raise TypeError, "msm_path: 'msm_on' kwarg needs to be either a Project or a list of projects"
 
     return os.path.join(root, typ, name)
+
+
+PROTOTOOLS_SFX = '/afs/crc.nd.edu/user/c/cabdulwa/prototools.git/starch'
+def cmd_convert_workunit_to_xtc(path, dest, dcdname='ww.dcd', prototools=PROTOTOOLS_SFX):
+    """returns the command to convert the path into an xtc"""
+
+    convert = os.path.join(prototools, 'ConvertFaHTarballToXTC.sfx')
+
+    wu = dbresults.Workunit.from_path(path)
+
+    proj = filter(lambda p: p.number == wu.get_project_id(), get_projects())
+
+    if len(proj) > 0:
+        fn = weave.Tool.ConvertFaHTarballToXTC(convert, dcdname, psf(proj[0]), dest)
+        cmd = [convert] + fn.cmd_args
+        cmd.append(path)
+
+        target = os.path.join(dest, wu.to_path())
+
+        return target, cmd
+    else:
+        raise IndexError, 'No project known for workunit: %s' % path
