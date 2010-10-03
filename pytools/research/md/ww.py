@@ -107,24 +107,39 @@ def mk_trajlist(project, xtcs=True, tarfiles=True, convert=lambda obj:obj, tarfi
 
 
     if xtcs is True:
-        for xtc_count ,xtc in enumerate(get_xtcs(project, **kws)):
+        print 'Getting xtcs'
+        for xtc_count, xtc in enumerate(get_xtcs(project, **kws)):
             yield xtc
         count = xtc_count + 1
     else:
+        print 'Skipping xtcs'
         count = 0
 
     limit = kws.pop('limit', None)
-    if type(limit) is int:
-        new_limit = limit - count
-        do_tarfiles = tarfiles and True
+    if type(limit) is int and count < limit:
+        new_limit   = limit - count
+        do_tarfiles = tarfiles and new_limit > 0 and True
+    elif limit is None:
+        new_limit   = limit
+        do_tarfiles = True
     else:
-        new_limit = -1
+        print 'Skipping tarfiles'
+        do_tarfiles = False
 
-    if do_tarfiles is True and type(new_limit) is int and new_limit > 0:
+    if do_tarfiles is True:
+        print 'Getting tarfiles'
         for tarfile in get_locations(project, limit=new_limit, **kws):
-            if os.path.exists(tarfile):
-                xtc, cmd = convert(tarfile)
-                yield '%s %s' % (xtc, ' '.join(cmd))
+            xtc, cmd = convert(tarfile)
+            result   = '%s %s' % (xtc, ' '.join(cmd))
+            if tarfile_exists_filter:
+                if os.path.exists(tarfile):
+                    count += 1
+                    yield result
+            else:
+                count += 1
+                yield result
+
+    print 'Trajectories in listing:', count
 
 
 def get_xtcs(*args, **kws):
