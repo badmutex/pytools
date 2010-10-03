@@ -74,11 +74,20 @@ def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc')
     if column is 'xtc':
         file_path_fn = lambda obj: obj.xtc
         db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
-        predicate = And(db.c.frames == frames, db.c.xtc != None)
+
+        if type(frames) is int:
+            predicate = And(db.c.frames == frames, db.c.xtc != None)
+        else:
+            predicate = And(db.c.xtc != None)
+
     elif column is 'location':
         file_path_fn = lambda obj: obj.location
         db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
-        predicate = And(db.c.frames == frames, db.c.location != None)
+
+        if type(frames) is int:
+            predicate = And(db.c.frames == frames, db.c.location != None, db.c.location % '/afs/%', db.c.xtc == None)
+        else:
+            predicate = And(db.c.location != None, db.c.location % '/afs/%', db.c.xtc == None)
 
     if isinstance(limit, int):
         q = Query(db, predicate, limit=limit ) 
@@ -88,6 +97,35 @@ def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc')
     wq_path_fixer = WorkqueuePathFixer()
     paths = itertools.imap( wq_path_fixer.fix, q )
     return list(paths)
+
+def mk_trajlist(project, xtcs=True, tarfiles=True, convert=lambda obj:obj, tarfile_exists_filter=True, **kws):
+
+    if xtcs is False and tarfiles is False:
+        msg = 'mk_trajlist: kwargs: xtcs, tarfiles cannot both be False'
+        print msg
+        raise ValueError, msg
+
+
+    if xtcs is True:
+        for xtc_count ,xtc in enumerate(get_xtcs(project, **kws)):
+            yield xtc
+        count = xtc_count + 1
+    else:
+        count = 0
+
+    limit = kws.pop('limit', None)
+    if type(limit) is int:
+        new_limit = limit - count
+        do_tarfiles = tarfiles and True
+    else:
+        new_limit = -1
+
+    if do_tarfiles is True and type(new_limit) is int and new_limit > 0:
+        for tarfile in get_locations(project, limit=new_limit, **kws):
+            if os.path.exists(tarfile):
+                xtc, cmd = convert(tarfile)
+                yield '%s %s' % (xtc, ' '.join(cmd))
+
 
 def get_xtcs(*args, **kws):
     return get_paths(*args, column='xtc', **kws)
