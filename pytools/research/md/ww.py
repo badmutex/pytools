@@ -31,6 +31,22 @@ class DBAccess(object):
         self.user     = user
         self.password = password
 
+    def to_sqlalchemy_session_string(self, dbtype='mysql'):
+        if type(self.user) is str and type(self.password) is str:
+            auth = '%s:%s' % (self.user, self.password)
+        else:
+            auth = ''
+
+        at = (auth + '@') if auth else ''
+
+        sess_str = '%(type)s://%(auth)s%(at)s/%(dbname)s' % {'type':dbtype,
+                                                             'auth':auth,
+                                                             'at':at,
+                                                             'dbname':self.db}
+
+        return sess_str
+
+
 def get_projects(dbname = lambda proj_number: 'P10K%02d' % (proj_number - 10000),
                  dbaccess = DBAccess(),
                  dbtype = 'mysql'):
