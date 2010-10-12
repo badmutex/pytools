@@ -31,7 +31,6 @@ class DBAccess(object):
         self.user     = user
         self.password = password
 
-
 def get_projects(dbname = lambda proj_number: 'P10K%02d' % (proj_number - 10000),
                  dbaccess = DBAccess(),
                  dbtype = 'mysql'):
@@ -85,9 +84,9 @@ def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc')
         db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
 
         if type(frames) is int:
-            predicate = And(db.c.frames == frames, db.c.location != None, db.c.location % '/afs/%', db.c.xtc == None)
+            predicate = And(db.c.frames == frames, db.c.location % '%.tar.bz2', db.c.xtc == None)
         else:
-            predicate = And(db.c.location != None, db.c.location % '/afs/%', db.c.xtc == None)
+            predicate = And(db.c.location % '%.tar.bz2', db.c.xtc == None)
 
     if isinstance(limit, int):
         q = Query(db, predicate, limit=limit ) 
