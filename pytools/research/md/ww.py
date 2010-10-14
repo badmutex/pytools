@@ -92,9 +92,9 @@ def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc')
         db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
 
         if type(frames) is int:
-            predicate = And(db.c.frames == frames, db.c.xtc != None)
+            predicate = And(db.c.frames == frames, db.c.xtc % '%.xtc')
         else:
-            predicate = And(db.c.xtc != None)
+            predicate = And(db.c.xtc % '%.xtc')
 
     elif column is 'location':
         file_path_fn = lambda obj: obj.location
