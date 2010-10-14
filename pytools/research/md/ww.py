@@ -37,12 +37,13 @@ class DBAccess(object):
         else:
             auth = ''
 
-        at = (auth + '@') if auth else ''
+        at = '@' if auth else ''
 
-        sess_str = '%(type)s://%(auth)s%(at)s/%(dbname)s' % {'type':dbtype,
-                                                             'auth':auth,
-                                                             'at':at,
-                                                             'dbname':self.db}
+        sess_str = '%(type)s://%(auth)s%(at)s%(host)s/%(dbname)s' % {'type':dbtype,
+                                                                     'auth':auth,
+                                                                     'at':at,
+                                                                     'host':self.host,
+                                                                     'dbname':self.db}
 
         return sess_str
 
