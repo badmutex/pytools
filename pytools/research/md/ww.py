@@ -8,7 +8,7 @@ import protolyze.weave as weave
 
 import protolyze.db.results as dbresults
 
-from weaver.dataset import MySQLDataSet, Query, And
+from weaver.dataset import MySQLDataSet, Query, And, Or
 
 import os.path
 import itertools
@@ -86,7 +86,7 @@ def psf(project, root=FOLDED_MODEL_ROOT):
     return os.path.join(root, 'ww_structure_%d_model_charm.psf' % project.mutant)
 
 
-def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc'):
+def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc', additional_and=None, additional_or=None):
     if column is 'xtc':
         file_path_fn = lambda obj: obj.xtc
         db = database(project, dbaccess=dbaccess, file_path = file_path_fn)
@@ -104,6 +104,11 @@ def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc')
             predicate = And(db.c.frames == frames, db.c.location % '%.tar.bz2', db.c.xtc == None)
         else:
             predicate = And(db.c.location % '%.tar.bz2', db.c.xtc == None)
+
+    if additional_and:
+        predicate = And(predicate, additional_and(db))
+    if additional_or:
+        predicate = Or(predicate, additional_or(db))
 
     if isinstance(limit, int):
         q = Query(db, predicate, limit=limit ) 
