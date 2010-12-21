@@ -55,16 +55,21 @@ def get_projects(dbname = lambda proj_number: 'P10K%02d' % (proj_number - 10000)
     def mkProject(n,v): return Project(n, dbaccess.host, v, dbname(n), dbtype)
 
     projects = map(lambda (k,v): mkProject(10000+k, v), [
+            (0, 22), (1,22), (2, 22), (3, 22), (4, 22), (5, 14), (6, 22), (7, 22), (8, 22), 
             (9,14), (12,0), (13,1), (14,2),
             (15, 3), (16,4), (17, 5),
             (19, 7), (20, 8), (21, 9), (22, 10), (23, 11), (24, 12),
             (27,16),
             (30,19), (31,20), (32, 21), (33, 22), (34, 23),
-            (38,27), (39, 28)
-            ]
+            (38,27), (39, 28),
+            (40, 22),
+            (41, 14),
+            ] + map(lambda p: (p, 22), range(42, 62))
                    )
 
     return projects
+
+PROJECTS = get_projects()
 
 
 def database(project, dbaccess=DBAccess(), file_path = lambda obj: obj.xtc):
@@ -77,13 +82,31 @@ def database(project, dbaccess=DBAccess(), file_path = lambda obj: obj.xtc):
     return db
 
 
-NDX_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/ndx-msmbuilder'
+def mutant_id(project):
+    if type(project) is Project:
+        return project.mutant
+    elif type(project) is int or type(project) is long:
+        mid = filter(lambda p: p.number == project, PROJECTS)
+        if len(mid) == 1:
+            return mid[0].mutant
+        else:
+            raise ValueError, 'Cannot find project with PID %s' % project
+    else:
+        raise ValueError, 'project must be %s or %s. Got %s = %s' % (Project, int, type(project), project)
+
+NDX_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/ndx/msmbuilder'
+GMX_NDX_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/ndx/gmx'
 def ndx(name, project, ndx_root=NDX_ROOT):
     return os.path.join(ndx_root, '%d/%s' % (project.mutant, name))
 
-FOLDED_MODEL_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/folded_model'
-def psf(project, root=FOLDED_MODEL_ROOT):
-    return os.path.join(root, 'ww_structure_%d_model_charm.psf' % project.mutant)
+FOLDED_ROOT = '/afs/crc.nd.edu/user/c/cabdulwa/Public/Research/md/ww/folded'
+def psf(project, root=FOLDED_ROOT):
+    mutantid = mutant_id(project)
+    return os.path.join(root, '%d.psf' % mutantid)
+
+def model_pdb(project, root=None):
+    psffile = psf(project) if root is None else psf(project, root=root)
+    return psffile.rsplit('.psf')[0] + '.pdb'
 
 
 def get_paths(project, frames=None, limit=None, dbaccess=DBAccess, column='xtc', additional_and=None, additional_or=None):
