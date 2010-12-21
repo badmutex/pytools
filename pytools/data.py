@@ -27,3 +27,11 @@ def rights(eithers):
 
 def lefts(eithers):
     return itertools.imap(lambda e: e.left,  itertools.ifilter(lambda e: e.failure(), eithers))
+
+
+def partition(eithers):
+    """
+    Returns a tuple of generators ([left value], [right value])
+    """
+
+    return lefts(eithers), rights(eithers)
