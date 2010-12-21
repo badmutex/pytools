@@ -16,3 +16,13 @@ def chunkmap(chunksize, fn, seq):
             yield buffer
             buffer = []
     if buffer: yield buffer
+
+
+def lazy_chunk(iterable, chunksize):
+    if chunksize <= 0:
+        chunksize = 1
+
+    import itertools as itr
+    return itr.ifilter(bool,
+                       itr.izip_longest( *[iter(iterable)]*chunksize,
+                                          fillvalue = None  ))
