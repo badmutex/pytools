@@ -8,8 +8,6 @@ setup(name='pytools',
                   'pytools.path',
                   'pytools.decorators',
 
-                  'pytools.research',
-                  'pytools.research.md',
                   'pytools.research.md.ww'
                   ]
       )
