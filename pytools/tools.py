@@ -12,3 +12,13 @@ def lazy_chunk(iterable, chunksize):
             buf = []
     if buf:
         yield buf
+
+
+def lazy_concatMap(fn, *iterables):
+    """
+    yields the application of *fn* over each value in **iterables*
+    """
+
+    for it in iterables:
+        for v in it:
+            yield fn(v)
